@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>DBTI · 导演人格测试</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: #111111;
+            --primary: #d4af37;
+            --text-main: #f8f8f8;
+            --text-sub: #888888;
+            --accent: #ff4d4d;
+            --border: #222222;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Optima", "Bodoni MT", "PingFang SC", serif; }
+        
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .clapper-top {
+            width: 100%; height: 12px;
+            background: repeating-linear-gradient(-45deg, #000, #000 15px, var(--primary) 15px, var(--primary) 30px);
+        }
+
+        .container {
+            background: var(--card-bg); border: 1px solid var(--border);
+            max-width: 650px; width: 100%; position: relative;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+        }
+
+        .content-padding { padding: 50px 40px; }
+
+        .header { text-align: center; margin-bottom: 40px; }
+        .title { font-size: 42px; font-weight: 900; letter-spacing: 8px; color: var(--primary); margin-bottom: 10px; text-transform: uppercase; }
+        .subtitle { color: var(--text-sub); font-size: 13px; letter-spacing: 3px; font-weight: 300; }
+
+        .progress-container { margin-bottom: 40px; }
+        .scene-meta { display: flex; justify-content: space-between; color: var(--primary); font-size: 11px; margin-bottom: 8px; letter-spacing: 2px; font-weight: bold;}
+        .progress-bar { width: 100%; height: 1px; background: #222; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.4s ease; }
+        
+        .question { font-size: 22px; line-height: 1.5; margin-bottom: 40px; font-weight: 500; min-height: 80px; }
+        .options { display: flex; flex-direction: column; gap: 15px; }
+        .option { 
+            padding: 22px 28px; background: #181818; border: 1px solid var(--border); 
+            cursor: pointer; transition: 0.3s; color: #ccc; font-size: 15px; line-height: 1.6; letter-spacing: 1px;
+        }
+        .option:hover { border-color: var(--primary); color: #fff; background: #202020; transform: translateY(-2px); }
+        
+        .nav-btns { display: flex; align-items: center; margin-top: 30px; }
+        .back-btn { background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: 12px; display: none; text-transform: uppercase; letter-spacing: 2px; }
+
+        .result-page { display: none; animation: pageFadeIn 1s ease; }
+        .res-header { text-align: center; margin-bottom: 50px; }
+        .type-code { font-size: 110px; font-weight: 900; color: var(--primary); line-height: 0.8; letter-spacing: -5px; margin-bottom: 15px; }
+        .type-name { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: 4px; border-bottom: 1px solid var(--primary); padding-bottom: 10px; display: inline-block; }
+        
+        .movie-card { background: #000; padding: 30px; border-left: 2px solid var(--primary); margin-bottom: 40px; }
+        .movie-label { font-size: 11px; color: var(--primary); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 3px; }
+        .movie-title { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: 1px; }
+
+        .detail-grid { display: flex; flex-direction: column; gap: 40px; }
+        .section-title { font-size: 12px; color: var(--primary); margin-bottom: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; }
+        .section-title::after { content: ""; flex: 1; height: 1px; background: #333; margin-left: 15px; }
+        .desc-text { color: #aaa; font-size: 15px; line-height: 1.9; text-align: justify; }
+        
+        .rules-list { list-style: none; }
+        .rules-list li { position: relative; padding-left: 25px; margin-bottom: 12px; color: #eee; font-size: 15px; line-height: 1.6; }
+        .rules-list li::before { content: "◆"; position: absolute; left: 0; color: var(--primary); font-size: 12px; }
+
+        .quote-text { font-style: italic; color: #fff; font-size: 18px; line-height: 1.6; padding: 20px; background: #0a0a0a; border-radius: 4px; margin-top: 10px; border: 1px solid #1a1a1a; }
+        .tyrant-box { background: rgba(255, 77, 77, 0.03); border: 1px dashed rgba(255, 77, 77, 0.2); padding: 25px; }
+
+        /* 操作按钮组 */
+        .action-btns { display: flex; gap: 15px; margin-top: 50px; }
+        .action-btn { flex: 1; padding: 18px; background: #1a1a1a; border: 1px solid var(--primary); color: var(--primary); font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; }
+        .action-btn:hover { background: var(--primary); color: #000; }
+        .restart-btn { width: 100%; padding: 18px; margin-top: 15px; background: transparent; border: 1px solid #333; color: #666; cursor: pointer; letter-spacing: 4px; transition: 0.3s; }
+        .restart-btn:hover { color: #fff; border-color: #666; }
+
+        /* 预览弹窗 */
+        #previewOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #previewImg { max-width: 90%; max-height: 75vh; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .close-preview { margin-top: 30px; padding: 12px 40px; background: transparent; border: 1px solid #666; color: #fff; border-radius: 30px; cursor: pointer; letter-spacing: 2px; }
+
+        @keyframes pageFadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="clapper-top"></div>
+    <div class="content-padding">
+        <div id="quizPage">
+            <div class="header">
+                <h1 class="title">DBTI</h1>
+                <p class="subtitle">如果把你扔到片场，你会拍出怎样的神作？</p>
+            </div>
+            
+            <div class="progress-container">
+                <div class="scene-meta"><span>AUTEUR PROFILING</span><span>SCENE <span id="currentNum">1</span> / 12</span></div>
+                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            </div>
+            
+            <div class="question" id="questionText"></div>
+            <div class="options" id="optionsContainer"></div>
+            
+            <div class="nav-btns"><button class="back-btn" id="backBtn" onclick="goBack()">PREV SCENE 上一镜</button></div>
+        </div>
+
+        <div class="result-page" id="resultPage">
+            <div class="res-header">
+                <div class="type-code" id="resCode"></div>
+                <div class="type-name" id="resName"></div>
+            </div>
+            
+            <div class="movie-card">
+                <div class="movie-label">灵魂代表作 / REPRESENTATIVE WORKS</div>
+                <div class="movie-title" id="resMovies"></div>
+            </div>
+
+            <div class="detail-grid">
+                <div class="analysis-section"><div class="section-title">创作母题与哲学</div><div class="desc-text" id="resDesc"></div></div>
+                <div class="analysis-section"><div class="section-title">视听语言风格</div><div class="desc-text" id="resVisual"></div></div>
+                <div class="analysis-section"><div class="section-title">片场生存法则</div><ul class="rules-list" id="resRules"></ul></div>
+                <div class="analysis-section"><div class="section-title">片场金句</div><div class="quote-text" id="resQuote"></div></div>
+                <div class="tyrant-box"><div class="section-title" style="color:var(--accent)">独裁症候群</div><div class="desc-text" id="resQuirk"></div></div>
+            </div>
+
+            <div class="action-btns">
+                <button class="action-btn" id="saveImgBtn">生成专属海报</button>
+            </div>
+            <button class="restart-btn" onclick="location.reload()">重新开机 · RETAKE</button>
+        </div>
+    </div>
+</div>
+
+<div id="posterWrapper" style="position: fixed; left: -9999px; top: 0; z-index: -1;">
+    <div id="sharePoster" style="width: 1080px; height: 1080px; background: #080808; padding: 80px; box-sizing: border-box; display: flex; flex-direction: column; position: relative;">
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 25px; background: repeating-linear-gradient(-45deg, #000, #000 30px, #d4af37 30px, #d4af37 60px);"></div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 50px; margin-top: 30px;">
+            <div style="font-size: 85px; font-weight: 900; color: #d4af37; letter-spacing: 12px; line-height: 1;">DBTI</div>
+            <div style="font-size: 32px; color: #aaa; letter-spacing: 5px; padding-bottom: 5px;">测测你的导演人格</div>
+        </div>
+
+        <div style="flex: 1;">
+            <div id="posterCode" style="font-size: 220px; font-weight: 900; color: #fff; line-height: 0.9; margin-bottom: 20px; letter-spacing: -2px;">OMAN</div>
+            <div id="posterName" style="font-size: 54px; font-weight: bold; color: #d4af37; margin-bottom: 50px; letter-spacing: 6px; display: inline-block;">冷静的灵魂解剖师</div>
+            
+            <div style="background: rgba(212, 175, 55, 0.05); border-left: 8px solid #d4af37; padding: 35px 40px; margin-bottom: 40px;">
+                <div style="font-size: 28px; color: #d4af37; margin-bottom: 20px; letter-spacing: 3px;">灵魂代表作 / REP WORKS</div>
+                <div id="posterMovies" style="font-size: 42px; color: #fff; font-weight: bold;">《老无所依》/《七宗罪》</div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px solid #222; padding-top: 50px;">
+            <div style="flex: 1; padding-right: 60px;">
+                <div style="font-size: 26px; color: #888; margin-bottom: 20px; letter-spacing: 2px;">片场金句：</div>
+                <div id="posterQuote" style="font-size: 36px; color: #ddd; font-style: italic; line-height: 1.6;">“电影不需要温度，它只需要精准。我的摄像机是一把手术刀。”</div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <div style="background: #fff; padding: 15px; border-radius: 12px;">
+                    <div id="qrcodeBox" style="width: 160px; height: 160px;"></div>
+                </div>
+                <div style="color: #aaa; font-size: 24px; margin-top: 20px; letter-spacing: 2px;">长按扫码测试</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="previewOverlay">
+    <p style="color: #d4af37; margin-bottom: 20px; font-size: 18px; letter-spacing: 2px; font-weight: bold;">长按图片保存你的专属大片海报</p>
+    <img id="previewImg" src="" />
+    <button class="close-preview" id="closePreviewBtn">关闭</button>
+</div>
+
+<script>
+    const questions = [
+        { q: "男主角在暴雨中遭遇了毕生最惨烈的背叛，精神彻底崩溃。你会怎么布置机位？", axis: "OE", opt1: { t: "离他十米外的固定机位，不给特写，冷眼旁观。"}, opt2: { t: "手持摄影直接怼到脸上，镜头跟着他剧烈颤抖。" } },
+        { q: "一场关键的黑帮火拼戏，预算充足，你打算如何呈现死亡？", axis: "MI", opt1: { t: "干脆利落的枪响，没有配乐，只有真实的血泊与倒地声。"}, opt2: { t: "放起咏叹调，用油画般的慢动作将暴力拍成一场华丽芭蕾。" } },
+        { q: "在后期剪辑室，面对海量的素材，你的剪辑哲学是：", axis: "AC", opt1: { t: "严格遵循开拍前的分镜脚本，每一秒都在为最终悬念做精密铺垫。"}, opt2: { t: "打碎时间线，根据人物极其主观的情绪波动进行跳跃式剪辑。" } },
+        { q: "电影迎来结局，主角推开了真相的大门。门后应该是：", axis: "NR", opt1: { t: "一个更大的谎言，或者无可挽回的深渊，挣扎是徒劳的。"}, opt2: { t: "哪怕只是一缕微弱的晨光。再残破的世界，也总有一丝希望。" } },
+        { q: "当你的演员在一场哭戏中表现得极其克制时，你会对他说：", axis: "OE", opt1: { t: "“保持住这种麻木，你只需要走到标记点，剩下的交给构图。”"}, opt2: { t: "“不行，这不对。把你内心最深处的痛苦全部掏出来！”" } },
+        { q: "如果要拍一场“表现人物内心极度空虚”的夜场戏，你会选择：", axis: "MI", opt1: { t: "一间昏暗、陈旧的出租屋，只有一盏忽明忽暗的廉价台灯。"}, opt2: { t: "打造一个超现实的霓虹迷宫，用光怪陆离的色彩淹没孤独。" } },
+        { q: "在片场，演员突然灵光一闪，发挥了一段不在剧本里的即兴台词：", axis: "AC", opt1: { t: "立刻喊卡。剧本就像精密的钟表，一个齿轮都不能乱加。"}, opt2: { t: "兴奋地拍下去。这种突如其来的失控感，正是剧本写不出的灵魂。" } },
+        { q: "你如何塑造全片最大的反派？", axis: "NR", opt1: { t: "纯粹的恶，或者是体制异化下的怪物，不需要给他任何怜悯。"}, opt2: { t: "展示他也是一个受损的灵魂。没有绝对的恶人，只有选错路的人。" } },
+        { q: "关于电影里的主角旁白（Voice-over），你的原则是：", axis: "OE", opt1: { t: "极度克制甚至完全不用。观众不需要被说教，他们应该自己观察。"}, opt2: { t: "大量使用。让角色在耳边低语告解，建立极其私密的羁绊。" } },
+        { q: "如果制片人额外给了你两千万美金，你会：", axis: "MI", opt1: { t: "买最好的胶片，去真实的极地或荒漠取景，死磕真实感。"}, opt2: { t: "全部砸进特效美术，建造一座只存在于脑海里的幻象奇观。" } },
+        { q: "如果要在电影里埋伏笔，你会怎么埋？", axis: "AC", opt1: { t: "第一幕放下的枪，第三幕必须打响。逻辑严丝合缝，不留破绽。"}, opt2: { t: "埋下晦涩的隐喻、突兀的符号，可能到最后也不解释。" } },
+        { q: "电影落幕，你希望观众走出影院时：", axis: "NR", opt1: { t: "感到深深的无力与窒息，仿佛被现实的重锤狠狠砸中。"}, opt2: { t: "眼眶湿润但带着微笑，感到内心的创伤被温柔地抚平。" } }
+    ];
+
+    const profiles = {
+        "OMAN": { name: "冷静的灵魂解剖师", movies: "《老无所依》 / 《七宗罪》", desc: "你视电影为一种精密的手术。你拒绝廉价的共情，以极度冷峻的上帝视角审视人类的困局。在你的哲学里，秩序感高于一切，世界是一个巨大的、无法逆转的因果齿轮。你不需要观众在电影院里寻找安慰，你只需要他们面对血淋淋的真相。", visual: "教科书式的对称构图，冷灰与深蓝色调的极致运用。偏爱固定长镜头，让空间本身的压迫感吞噬角色。对环境音的采集极其吹毛求疵，力求还原一种“非人感”的真实。", rules: ["现场绝对安静，严禁任何无关的沟通。","演员只是构图的一部分，不需要带入过多的私人情感。","拍摄必须严格按照分镜表执行，误差不能超过一厘米。"], quote: "“电影不需要温度，它只需要精准。我的摄像机是一把手术刀。”", quirk: "病态的控制狂。如果片场的一缕烟雾飘动的方向不符合你的美学，你会要求全组停工直到风向改变。" },
+        "OMAR": { name: "克制的现实守望者", movies: "《小偷家族》 / 《入殓师》", desc: "你深信最伟大的力量往往藏在最琐碎、最无声的细节里。你用古典的严谨结构去包裹最柔软的生活质感。你不是在拍电影，你是在记录时间的灰尘如何在人性上缓慢堆积。即便生活支离破碎，你也会在废墟上洒下一抹金色的余晖。", visual: "偏爱低机位的自然观察，光线布局极其柔和。你的镜头往往放得很低，像一个谦卑的家庭成员，静静捕捉食物的蒸汽、榻榻米上的阳光或眼角稍纵即逝的落寂。", rules: ["尊重演员的生理节律，吃饭和休息比赶工重要。","尽量使用自然光，拒绝任何干扰生活质感的灯光布局。","所有的戏剧冲突都必须消解在日常对话中。"], quote: "“如果电影能让一个普通人感到被理解，那两小时的寂寞就是值得的。”", quirk: "生活质感偏执狂。为了拍一个主角吃面喝汤的真实反应，你可以让演员在现场吃掉三十碗面。" },
+        "OMCN": { name: "绝望的废墟漫步者", movies: "《四百击》 / 《大象》", desc: "你是一个游走在影史边缘的孤傲诗人。你鄙视一切商业化的起承转合，认为那是对现实的阉割。你镜头下的世界是破碎的、偶然的。你从不试图给观众答案，因为现实本身就没有答案。你的电影是送给那些迷失在荒野中灵魂的默哀。", visual: "大量的长距离跟拍镜头，营造一种极其不稳定的流浪视觉体验。粗粝的胶片颗粒感和近乎自然主义的收音，让观众仿佛置身于那片荒原之中，感受无声的暴力。", rules: ["剧本只是草稿，现实发生的意外才是电影。","不要演戏，只要存在于镜头里。","拒绝高潮，生活本身就是一场没有结局的游荡。"], quote: "“别问我这部电影讲了什么。你去看，去听，去感受那片荒原。”", quirk: "剧本虚无主义。你经常在开拍前五分钟宣布放弃所有既定对白，让演员在真实的街道上进行无意义的漫游。" },
+        "OMCR": { name: "诗意的日常拾荒者", movies: "《德州巴黎》 / 《美国往事》", desc: "你迷恋的是那些被世界遗忘的边缘地带。公路、废弃加油站、深夜的洗手间……在你的眼中，这些地方都散发着忧郁的蓝调。你并不急于叙事，你更愿意在一个情绪里停留很久。你镜头里的救赎，往往来自一次偶然的擦肩而过。", visual: "广袤的远景构图与极具冲击力的色彩反差（如荒原里的红裙）。你对空镜头的运用堪称大师级别，能让死物开口说话，让静止的画面流淌出浓烈的怀旧感。", rules: ["等待是拍摄的一部分，等待云层，等待心情。","给画面留白，不要用台词填满观众的耳朵。","寻找孤独中的美感，这是电影的唯一母题。"], quote: "“有时候，什么都不发生，才是电影最动人的时刻。”", quirk: "自然光猎人。你绝对不允许在你的片场使用大面积的人造灯光。为了一个理想的落日弧度，你可以让所有人停工三天。" },
+        "OIAN": { name: "华丽的深渊暴君", movies: "《罗斯玛丽的婴儿》 / 《发条橙》", desc: "你是一个美学上的极权主义者。你用极其极致、甚至带有压迫感的视觉奇观，将观众囚禁在你设计的精神迷宫里。你镜头里的恶是优雅的、结构对称的，这种反差制造了令人窒息的惊悚感。你不是在拍电影，你是在建造一座华丽的地狱。", visual: "极端的几何对称构图，高饱和度的撞色设计。偏爱使用广角镜头制造空间扭曲感，让建筑物本身成为一个吞噬角色的动态怪物。每一个画面都经过数学般的精密计算。", rules: ["构图的中心点必须绝对对齐，差一毫米都不行。","演员的精神状态越接近崩溃，画面就越真实。","道具的摆放位置是神圣不可侵犯的法律。"], quote: "“美到极致就是恐怖。我要让观众在每一个完美的画面里感到绝望。”", quirk: "NG大王。为了一个演员进门时眼神偏移的角度，你可以面无表情地要求重拍120次，直到全组人想杀掉你。" },
+        "OIAR": { name: "孤独的宇宙沙盘手", movies: "《银翼杀手》 / 《楚门的世界》", desc: "你站在人类文明的高度俯视众生。你迷恋宏大的命题：时间、进化、宿命与人造的真相。你极其严谨，剧本里的每一环逻辑都经过精密计算。你不仅是在拍电影，你是在上帝的沙盘里推演人类的终极结局。", visual: "极其宏伟的远景构图，伴随古典主义的交响乐。你的画面充满了神圣的秩序感。每一个特效细节都在暗示某种巨大的宇宙真相，空间感在你的镜头下呈现出永恒的气息。", rules: ["逻辑漏洞是电影最致命的侮辱，必须全盘封死。","视角要超越个体，去观察群体的流动。","电影是用来探讨终极问题的工具，不只是娱乐。"], quote: "“电影是造梦，但我造的是关于全人类未来的清醒梦。”", quirk: "细节偏执狂。哪怕是背景里一个背景板上的字体选错，你也会在凌晨三点让整个视效组回公司重新渲染。" },
+        "OICN": { name: "疯狂的幻象撕裂者", movies: "《低俗小说》 / 《穆赫兰道》", desc: "你是一个天生的解构大师，视电影为一场华丽的骗局。你极其厌恶平庸的叙述逻辑，喜欢把时间线像揉废纸一样揉乱，再重新拼接。你镜头下的世界是荒诞的，美与丑、善与恶在你的调色盘里被彻底搅碎，形成一种暴力且迷人的混乱。", visual: "高频率的快切镜头，强烈的跳跃性剪辑。擅长使用非线性的蒙太奇手法和怪诞的光影对比，让观众在不断的认知错位中获得生理性的高潮。", rules: ["打乱时间，让观众在迷宫里迷路才是最大的乐趣。","电影里没有废话，只有看起来像废话的哲学。","暴力必须带有荒诞感和节奏感。"], quote: "“为什么要讲逻辑？现实世界有逻辑吗？我只负责给观众制造一场完美的混乱。”", quirk: "恶趣味藏家。你喜欢在镜头角落藏一些极其诡异、跟剧情完全无关的符号，以此来嘲讽那些喜欢过度解读的影评人。" },
+        "OICR": { name: "荒诞的浪漫幸存者", movies: "《布达佩斯大饭店》 / 《天使爱美丽》", desc: "你拥有一颗最童真也最伤感的灵魂。你用极其繁复、华丽、糖果般的视觉语言，去包裹现实里那些孤独到发苦的灵魂。你深信浪漫是抵御荒诞世界的唯一武器。你的电影是一份送给成年人的、带有一丝忧郁的礼物。", visual: "极度的色彩饱和，童话般的置景设计。偏爱居中构图和左右横移镜头，让电影看起来像一本正在翻阅的精致立体插画书。视觉元素的丰富度几乎达到过载的程度。", rules: ["场景配色必须严格符合色板，不允许任何色偏。","电影里的世界必须比现实世界更美。","每一个古怪的角色都值得一个温暖的特写。"], quote: "“世界已经够烂了，为什么不在电影里给那些孤独的人一个温暖的家？”", quirk: "置景狂人。如果现场某一个茶杯的红色和背景的墙纸颜色差了0.5个色阶，你会当场罢拍直到道具组换掉它。" },
+        "EMAN": { name: "压抑的社会悲歌者", movies: "《寄生虫》 / 《熔炉》", desc: "你是一个愤怒的社会观察者。你将镜头对准阶级的裂痕和制度的腐朽。你完全与主角共情，将他们的绝望一点点放大，直到让观众感到生理性的窒息。你深信电影是改变世界的武器，哪怕它最终指向的是彻底的毁灭。", visual: "极具隐喻感的空间对比（高处与地下、明亮与阴暗），写实感极强的灯光。你的镜头富有极强的侵略性，总能捕捉到角色在压迫下扭曲的肌肉颤动和眼神中的无力。", rules: ["揭露真相是导演的第一职责。","所有的符号（如雨、楼梯）都必须承载阶级隐喻。","不要给观众喘息的机会，要把他们按在深渊里。"], quote: "“我拍的不是故事，是那些被你们刻意无视的脓疮。”", quirk: "情绪压榨机。你会不断挖掘演员内心最隐秘的创伤，直到他们在镜头前彻底崩溃流泪，甚至停机后也无法走出阴影。" },
+        "EMAR": { name: "温情的岁月缝补师", movies: "《东京物语》 / 《饮食男女》", desc: "你是影坛里最温柔的宽恕者。你深信人与人之间的羁绊是这苦难世间唯一的救赎。你用最扎实的叙事，讲述那些柴米油盐中的爱与哀愁。你从不制造剧烈的撕裂，而是用极其细腻的笔触缝合那些隐秘的伤口。你的电影是一剂慢火熬制的良药。", visual: "温暖、明亮的低饱和度色调。擅长拍群体聚餐的场面，能在这种最平常的行为中拍出人际关系的流动与人性的厚度。运镜极其平稳，不带任何侵略性。", rules: ["拍好每一顿饭，那是人类情感的核心。","尊重角色，不要把他们当成表达意图的棋子。","结局可以有缺憾，但必须有尊严。"], quote: "“最好的电影，就是当灯光亮起时，你只想给身边的人一个拥抱。”", quirk: "剧组家长制。你甚至会亲自参与剧组每天的午餐菜单设计，坚信只有吃得好的团队才能拍出温暖人心的作品。" },
+        "EMCN": { name: "破碎的边缘游荡者", movies: "《春光乍泄》 / 《花样年华》", desc: "你是一个纯粹的情绪动物，视电影为灵魂的呓语。你鄙视一切逻辑，认为那会抹杀美感。你深陷在角色的怀旧与孤独中，用摇晃的、支离破碎的镜头去编织一段关于离散与错位的感官梦境。你的电影是流动的、醉人的诗。", visual: "极大的光影对比，快慢动作的无意识切换。极其依赖氛围感的营造（如烟雾、雨滴、忽明忽暗的霓虹），镜头语言极度自恋、私密且充满流动美感。", rules: ["不要问剧情，先问问你的心这种颜色的光对不对。","没有台词的时候，音乐就是灵魂的对白。","拍出那一刻的氛围，比拍清楚故事更重要。"], quote: "“我不要剧本，我只要那一分钟的雨。那一分钟，我们是永恒的。”", quirk: "灵感狂魔。你可能在半夜两点叫醒整组人只为拍一段没有任何意义的舞蹈，最后还可能根本不剪进正片里。" },
+        "EMCR": { name: "伤痕的灵魂引路人", movies: "《海边的曼彻斯特》 / 《心灵捕手》", desc: "你是捕捉心理创伤的大师。你与角色的痛苦感同身受，展现人在巨大创伤后的应激、逃避与极其微弱的重生。你并不承诺一个大圆满，但你总是会在一片废墟中，为那些破碎的人留下一把虽然关着但没上锁的门。", visual: "大量的近景特写，捕捉演员最细微的面部抽动。色调通常清冷单调，但偶尔会有暖光闪动。剪辑节奏往往跟随角色的呼吸节律，带有一种悲剧式的克制感。", rules: ["痛苦是不需要大喊大叫的。","给沉默留出足够的长度。","让观众在角色的哭泣中看到自己的影子。"], quote: "“痛苦是不可能消失的，我们只能学习如何与它共处。这就是我拍电影的意义。”", quirk: "过度共情者。你会花几十个小时跟演员聊他们的原生家庭阴影，最后搞得演员不得不去请长假看心理医生。" },
+        "EIAN": { name: "绝美的末日殉道者", movies: "《黑天鹅》 / 《罗曼蒂克消亡史》", desc: "你极致迷恋“毁灭之美”。你将角色内心的欲望、疯狂与恐惧具象化为极其华丽震撼的视觉盛宴。你带着一种殉道者的精神，引导主角一步步走向不可挽回的癫狂。在你的世界观里，生命只有在燃烧到灰飞烟灭时才最具价值。", visual: "巴洛克式的光影对比，极其繁复精致的镜头设计。偏爱使用象征主义的视觉符号，让画面每一寸都充满了令人不安的力量感和极度的欲望张力。", rules: ["追求美到令人窒息的画面，即便它是血腥的。","艺术必须伴随着某种程度的自我毁灭。","服装和妆造必须传达角色的灵魂扭曲。"], quote: "“如果艺术不需要献祭生命，那它就不值一提。我要拍出那种带血的美。”", quirk: "极致感官虐待。你要求演员在精神和肉体上都要达到极端的、甚至是非人的状态，坚信只有在生理极限处才能诞生神迹。" },
+        "EIAR": { name: "磅礴的织梦大宗师", movies: "《星际穿越》 / 《辛德勒的名单》", desc: "你是工业时代最后的梦想守护者。你极其擅长用最顶级的视觉奇观去讲述最普世的人伦情感。你不仅是一个导演，更是一个宏大世界的建造者。你在冰冷的科学或残酷的战争背景下，依然能让观众看到人类尊严的光芒。", visual: "宽银幕的壮阔景观，极具颗粒感的胶片质感。你对宏大场面的调度能力令人叹为观止，同时又能精准捕捉到万人丛中那一个湿润的眼神。视听语言极其宏伟厚重。", rules: ["电影是为了全人类而拍的梦境。","技术是手段，人性是唯一的终点。","要让观众在走出影院时感到自己变得更强大。"], quote: "“我建造奇观，是为了让你看清，在这些奇观面前，人类的爱依然更伟大。”", quirk: "实拍执念。即便预算惊人，你依然坚持造出一艘真的宇宙飞船或者炸掉一架真的波音飞机，只为给观众那种CG无法模拟的震撼。" },
+        "EICN": { name: "极致的迷狂堕落者", movies: "《猜火车》 / 《搏击俱乐部》", desc: "你的电影是一剂烈性迷幻药。你深入边缘群体的潜意识，用眼花缭乱的视听轰炸展现一幅幅疯狂、堕落且毫无希望的狂欢画圈。你不在乎主流价值观，只在乎如何最极致地释放人性的原始荷尔蒙。你是一个叛逆的虚无主义者。", visual: "快速剪辑，MTV式的运镜风格。迷恋那些反差极大的配乐应用（如在极度暴力场面配欢快民歌），画面充满了挑衅、宣泄和令人心跳加速的快感。", rules: ["节奏快到让观众没时间思考。","电影应该像毒药一样让观众上瘾。","打破所有的第四面墙。"], quote: "“文明是谎言，只有这一刻的疯狂是真的。我的电影就是给这操蛋世界的一记耳光。”", quirk: "肾上腺素暴君。你讨厌任何静态、安稳的画面，如果你发现摄影师这一秒手没抖，你会立刻认为他今天没在状态。" },
+        "EICR": { name: "绚烂的意识潜游者", movies: "《寻梦环游记》 / 《红辣椒》", desc: "你的想象力彻底摆脱了地心引力。你的电影是意识流的狂舞，时空交错，在乱象丛生中寻找爱与记忆的救赎。你深信梦境比现实更真实。你是一个在光影迷宫里寻找归家之路的孩子，永远充满好奇与悲悯。", visual: "极具想象力的几何转场设计，爆炸般的色彩应用。你对画面元素的细节填充达到了偏执的程度，每一帧都值得反复拉片钻研。现实与梦境的界限在你的调色板下彻底模糊。", rules: ["逻辑可以被梦境取代，只要情感是真的。","色彩是表达情绪的第一武器。","让死去的记忆在银幕上复活。"], quote: "“梦境是我唯一的避风港。在电影里，死去的记忆可以重新起舞。”", quirk: "逻辑跳跃者。你经常把昨晚做的离奇梦境强行塞进当天的拍摄里，让副导演和特效总监因为你突如其来的脑洞而集体崩溃。" }
+    };
+
+    let current = 0; let scores = { O:0, E:0, M:0, I:0, A:0, C:0, N:0, R:0 }; let history = [];
+
+    function renderQuestion() {
+        const q = questions[current];
+        document.getElementById("currentNum").textContent = current + 1;
+        document.getElementById("progressFill").style.width = ((current / 12) * 100) + "%";
+        document.getElementById("questionText").textContent = q.q;
+        document.getElementById("backBtn").style.display = current > 0 ? "inline-block" : "none";
+        
+        const optsDiv = document.getElementById("optionsContainer");
+        optsDiv.innerHTML = "";
+        
+        [q.opt1, q.opt2].forEach((opt, idx) => {
+            const btn = document.createElement("div");
+            btn.className = "option";
+            btn.textContent = opt.t;
+            btn.onclick = () => handleAnswer(q.axis[idx]);
+            optsDiv.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(value) {
+        history.push({ current: current, scores: { ...scores } });
+        scores[value]++; current++;
+        if (current < 12) renderQuestion(); else showResult();
+    }
+
+    function goBack() {
+        if (history.length > 0) {
+            const lastState = history.pop(); current = lastState.current; scores = lastState.scores;
+            renderQuestion();
+        }
+    }
+
+    function showResult() {
+        const axis1 = scores.O > scores.E ? "O" : "E";
+        const axis2 = scores.M > scores.I ? "M" : "I";
+        const axis3 = scores.A > scores.C ? "A" : "C";
+        const axis4 = scores.N > scores.R ? "N" : "R";
+        
+        const typeCode = axis1 + axis2 + axis3 + axis4;
+        const profile = profiles[typeCode];
+
+        // 绑定全局对象，供生成海报时使用
+        window.__currentResult = { typeCode, profile };
+
+        document.getElementById("quizPage").style.display = "none";
+        document.getElementById("resultPage").style.display = "block";
+
+        document.getElementById("resCode").textContent = typeCode;
+        document.getElementById("resName").textContent = profile.name;
+        document.getElementById("resMovies").textContent = profile.movies;
+        document.getElementById("resDesc").textContent = profile.desc;
+        document.getElementById("resVisual").textContent = profile.visual;
+        document.getElementById("resQuote").textContent = profile.quote;
+        document.getElementById("resQuirk").textContent = profile.quirk;
+
+        const rulesList = document.getElementById("resRules");
+        rulesList.innerHTML = "";
+        profile.rules.forEach(rule => {
+            const li = document.createElement("li"); li.textContent = rule; rulesList.appendChild(li);
+        });
+    }
+
+    // ================= 核心：生成方形海报逻辑 =================
+    document.getElementById('saveImgBtn').addEventListener('click', function() {
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '正在冲洗胶片...';
+        btn.disabled = true;
+
+        const data = window.__currentResult;
+        
+        // 1. 同步结果到隐藏的海报模板中
+        document.getElementById('posterCode').textContent = data.typeCode;
+        document.getElementById('posterName').textContent = data.profile.name;
+        document.getElementById('posterMovies').textContent = data.profile.movies;
+        document.getElementById('posterQuote').textContent = data.profile.quote;
+
+        // 2. 动态生成当前网址的二维码（别人扫码直接进你部署好的页面）
+        const qrBox = document.getElementById('qrcodeBox');
+        qrBox.innerHTML = ''; 
+        new QRCode(qrBox, {
+            text: window.location.href.split('?')[0], // 自动获取当前链接
+            width: 160,
+            height: 160,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.M
+        });
+
+        // 3. 稍作延迟，确保二维码和字体渲染完成，然后截图
+        setTimeout(() => {
+            html2canvas(document.getElementById('sharePoster'), {
+                scale: 1.5, // 保证清晰度
+                backgroundColor: '#080808',
+                useCORS: true
+            }).then(canvas => {
+                // 显示弹窗
+                document.getElementById('previewImg').src = canvas.toDataURL('image/jpeg', 0.9);
+                document.getElementById('previewOverlay').style.display = 'flex';
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(e => {
+                alert('海报生成失败，请重试');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }, 500);
+    });
+
+    // 关闭预览
+    document.getElementById('closePreviewBtn').addEventListener('click', function() {
+        document.getElementById('previewOverlay').style.display = 'none';
+    });
+    document.getElementById('previewOverlay').addEventListener('click', function(e) {
+        if (e.target === this) this.style.display = 'none';
+    });
+
+    renderQuestion();
+</script>
+
+</body>
+</html>
