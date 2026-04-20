@@ -77,6 +77,14 @@
         .section-title { font-size: 12px; color: var(--primary); margin-bottom: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; }
         .section-title::after { content: ""; flex: 1; height: 1px; background: #333; margin-left: 15px; }
         .desc-text { color: #aaa; font-size: 15px; line-height: 1.9; text-align: justify; }
+
+        /* 维度解析网格 */
+        .dim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px; }
+        .dim-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 20px; border-radius: 8px; position: relative; overflow: hidden; }
+        .dim-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--primary); }
+        .dim-letter { font-size: 28px; font-weight: 900; color: var(--primary); line-height: 1; margin-bottom: 8px; letter-spacing: 2px; }
+        .dim-title { font-size: 13px; color: #fff; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; }
+        .dim-desc { font-size: 13px; color: #aaa; line-height: 1.6; text-align: justify; }
         
         .rules-list { list-style: none; }
         .rules-list li { position: relative; padding-left: 25px; margin-bottom: 12px; color: #eee; font-size: 15px; line-height: 1.6; }
@@ -98,6 +106,10 @@
         .close-preview { margin-top: 30px; padding: 12px 40px; background: transparent; border: 1px solid #666; color: #fff; border-radius: 30px; cursor: pointer; letter-spacing: 2px; }
 
         @keyframes pageFadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 500px) {
+            .dim-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -134,6 +146,11 @@
             </div>
 
             <div class="detail-grid">
+                <div class="analysis-section">
+                    <div class="section-title">人格坐标解析 / DIMENSIONS</div>
+                    <div class="dim-grid" id="resDimensions"></div>
+                </div>
+
                 <div class="analysis-section"><div class="section-title">创作母题与哲学</div><div class="desc-text" id="resDesc"></div></div>
                 <div class="analysis-section"><div class="section-title">视听语言风格</div><div class="desc-text" id="resVisual"></div></div>
                 <div class="analysis-section"><div class="section-title">片场生存法则</div><ul class="rules-list" id="resRules"></ul></div>
@@ -205,6 +222,18 @@
         { q: "电影落幕，你希望观众走出影院时：", axis: "NR", opt1: { t: "感到深深的无力与窒息，仿佛被现实的重锤狠狠砸中。"}, opt2: { t: "眼眶湿润但带着微笑，感到内心的创伤被温柔地抚平。" } }
     ];
 
+    // 四个维度的字母解析词典
+    const letterDict = {
+        "O": { title: "Observer 旁观者", desc: "上帝视角。你与角色保持绝对距离，冷眼旁观命运齿轮转动，摄像机是你的手术刀。" },
+        "E": { title: "Empathizer 共情者", desc: "沉浸代入。你与角色同呼吸共命运，镜头带有强烈的主观情绪，把观众强行拉入情感漩涡。" },
+        "M": { title: "Minimalist 极简派", desc: "现实解剖。克制、留白、自然光。你相信真实本身的力量，厌恶一切多余的工业修饰。" },
+        "I": { title: "Illusionist 造梦派", desc: "视觉奇观。色彩、构图、大场面。你是极繁主义的美学暴君，用光影搭建感官帝国。" },
+        "A": { title: "Architect 建筑师", desc: "精密推演。严格的古典叙事，草蛇灰线。起承转合如建筑般严丝合缝，不容许任何逻辑失控。" },
+        "C": { title: "Chaos 混沌者", desc: "意识潜流。打破线性时间，迷恋直觉与潜意识。你的叙事是随性的、破碎的、反叛的。" },
+        "N": { title: "Nihilist 虚无者", desc: "直视深渊。不妥协，不粉饰。你把悲剧撕裂给人看，拒绝向观众提供廉价的虚假希望。" },
+        "R": { title: "Redeemer 救赎者", desc: "废墟找花。无论世界多残破，你总会在结尾留下一丝温情与光亮，相信人性的最终和解。" }
+    };
+
     const profiles = {
         "OMAN": { name: "冷静的灵魂解剖师", movies: "《老无所依》 / 《七宗罪》", desc: "你视电影为一种精密的手术。你拒绝廉价的共情，以极度冷峻的上帝视角审视人类的困局。在你的哲学里，秩序感高于一切，世界是一个巨大的、无法逆转的因果齿轮。你不需要观众在电影院里寻找安慰，你只需要他们面对血淋淋的真相。", visual: "教科书式的对称构图，冷灰与深蓝色调的极致运用。偏爱固定长镜头，让空间本身的压迫感吞噬角色。对环境音的采集极其吹毛求疵，力求还原一种“非人感”的真实。", rules: ["现场绝对安静，严禁任何无关的沟通。","演员只是构图的一部分，不需要带入过多的私人情感。","拍摄必须严格按照分镜表执行，误差不能超过一厘米。"], quote: "“电影不需要温度，它只需要精准。我的摄像机是一把手术刀。”", quirk: "病态的控制狂。如果片场的一缕烟雾飘动的方向不符合你的美学，你会要求全组停工直到风向改变。" },
         "OMAR": { name: "克制的现实守望者", movies: "《小偷家族》 / 《入殓师》", desc: "你深信最伟大的力量往往藏在最琐碎、最无声的细节里。你用古典的严谨结构去包裹最柔软的生活质感。你不是在拍电影，你是在记录时间的灰尘如何在人性上缓慢堆积。即便生活支离破碎，你也会在废墟上洒下一抹金色的余晖。", visual: "偏爱低机位的自然观察，光线布局极其柔和。你的镜头往往放得很低，像一个谦卑的家庭成员，静静捕捉食物的蒸汽、榻榻米上的阳光或眼角稍纵即逝的落寂。", rules: ["尊重演员的生理节律，吃饭和休息比赶工重要。","尽量使用自然光，拒绝任何干扰生活质感的灯光布局。","所有的戏剧冲突都必须消解在日常对话中。"], quote: "“如果电影能让一个普通人感到被理解，那两小时的寂寞就是值得的。”", quirk: "生活质感偏执狂。为了拍一个主角吃面喝汤的真实反应，你可以让演员在现场吃掉三十碗面。" },
@@ -275,6 +304,21 @@
         document.getElementById("resCode").textContent = typeCode;
         document.getElementById("resName").textContent = profile.name;
         document.getElementById("resMovies").textContent = profile.movies;
+        
+        // 动态注入四个字母的解析
+        const dimGrid = document.getElementById("resDimensions");
+        dimGrid.innerHTML = "";
+        typeCode.split('').forEach(letter => {
+            const data = letterDict[letter];
+            dimGrid.innerHTML += `
+                <div class="dim-card">
+                    <div class="dim-letter">${letter}</div>
+                    <div class="dim-title">${data.title}</div>
+                    <div class="dim-desc">${data.desc}</div>
+                </div>
+            `;
+        });
+
         document.getElementById("resDesc").textContent = profile.desc;
         document.getElementById("resVisual").textContent = profile.visual;
         document.getElementById("resQuote").textContent = profile.quote;
@@ -302,7 +346,6 @@
 
         const qrBox = document.getElementById('qrcodeBox');
         qrBox.innerHTML = ''; 
-        // 生成对应缩小的140x140二维码
         new QRCode(qrBox, {
             text: window.location.href.split('?')[0], 
             width: 140,
